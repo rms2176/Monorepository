@@ -16,6 +16,7 @@ import argh
 import yaml
 
 import helpers
+import http_file_stager
 
 
 MONOREPOSITORY_ROOT, CURRENT_CODE_BASE_NAME = helpers.find_code_base_root()
@@ -89,6 +90,17 @@ class CodeBase:
             logging.debug(f"It appears {self.code_base_name} was not previously built.")
             return False
 
+    def _stage_input_files(self, input_files_dir: str) -> None:
+
+        input_file_names = [input_file["name"] for input_file in self.metadata.get("input_files", [])]
+        if input_file_names:
+            logging.debug("Staging input files...")
+            os.makedirs(input_files_dir, exist_ok=True)
+            my_http_file_stager = http_file_stager.HttpFileStager(input_files_dir, input_file_names)
+            my_http_file_stager.stage()
+            # TODO: Validate hashes here.
+            logging.debug("Staged input files.")
+
     def build(self) -> None:
         if self.attempt_restore_previous_build():
             return
@@ -97,21 +109,25 @@ class CodeBase:
             depedency_code_base = get_codebase(dependency)
             depedency_code_base.build()
 
-        logging.debug(f"Building {self.code_base_name}...")
         stdout_log = open(os.path.join(BUILD_INFORMATION.metadata_prefix, f"{self.code_base_name}.out"), 'w')
         stderr_log = open(os.path.join(BUILD_INFORMATION.metadata_prefix, f"{self.code_base_name}.err"), 'w')
 
         # In order to avoid modifying the source (which would in turn modify the hash),
-        # we build in a temp dir.
+        # we build in a temp dir, which is a clone of the source.
         with tempfile.TemporaryDirectory() as temp_dir_parent:
             temp_dir = os.path.join(temp_dir_parent, self.code_base_name)
             shutil.copytree(self.code_base_root, temp_dir)
-            os.chdir(temp_dir)
+            self._stage_input_files(os.path.join(temp_dir, "input_files"))
+
             if os.path.isfile("build"):
                 command = ["./build"]
             elif os.path.isfile("Makefile"):
                 command = ["make"]
+            else:
+                raise Exception(f"Unable to determine how to build {self.code_base_name}")
 
+            os.chdir(temp_dir)
+            logging.debug(f"Building {self.code_base_name}...")
             try:
                 subprocess.run(command, check=True,
                                env=helpers.get_builder_env(BUILD_INFORMATION.prefix),
