@@ -1,9 +1,10 @@
-import errno
+# pylint: disable=line-too-long
+
 import hashlib
 import os
 import stat
 
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 import _hashlib  # This is only for typing, since hashlib functions return _hashlib.HASH objects
 
@@ -39,7 +40,7 @@ def get_file_hash(file_name: str) -> str:
     return sha1.hexdigest()
 
 
-def get_output_hashes_and_modes(directory) -> Dict[str, Tuple[str, int]]:
+def get_output_hashes_and_modes(directory) -> Tuple[Dict[str, Tuple[str, int]], Dict[str, str]]:
     output_hashes_and_modes = {}
     output_symbolic_links = {}
     for subdir, _dirs, files in os.walk(directory):

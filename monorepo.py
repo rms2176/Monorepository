@@ -1,3 +1,6 @@
+# pylint: disable=fixme
+# pylint: disable=line-too-long
+
 # We disable this because fstrings are more readable than the older string formatting
 # and we don't care about the performance penalty.
 # pylint: disable=logging-fstring-interpolation
@@ -10,7 +13,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import List, Tuple
+from typing import List
 
 import argh
 import yaml
@@ -35,6 +38,8 @@ class CodeBase:
     def __init__(self, code_base_name):
         self.code_base_name = code_base_name
         self.code_base_root = os.path.join(MONOREPOSITORY_ROOT, code_base_name)
+        self.output_hashes_and_modes = {}
+        self.output_symbolic_links = {}
         logging.debug(f"Loading metadata for {code_base_name}...")
         self._load_metadata()
         self._compute_hash()
@@ -89,14 +94,14 @@ class CodeBase:
                 os.chmod(file_name, file_mode)
 
             for symbolic_link_name, symbolic_link_target in self.output_symbolic_links.items():
-                os.makedirs(os.path.dirname(file_name), exist_ok=True)
+                os.makedirs(os.path.dirname(symbolic_link_name), exist_ok=True)
                 os.symlink(symbolic_link_target, symbolic_link_name)
 
             logging.debug(f"Restored {self.code_base_name} from previous build.")
             return True
-        else:
-            logging.debug(f"It appears {self.code_base_name} was not previously built.")
-            return False
+
+        logging.debug(f"It appears {self.code_base_name} was not previously built.")
+        return False
 
     def _stage_input_files(self, input_files_dir: str) -> None:
         input_file_names = [input_file["name"] for input_file in self.metadata.get("input_files", [])]

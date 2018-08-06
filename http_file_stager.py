@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long
+
 import os
 import urllib.parse
 import urllib.request
