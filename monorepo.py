@@ -77,9 +77,10 @@ class CodeBase:
             cas_path = os.path.join(BUILD_INFORMATION.metadata_prefix, "cas")
             for file_name, hash_and_mode in self.output_hashes_and_modes.items():
                 file_hash, file_mode = hash_and_mode
+                cas_name = f"{file_hash}-{file_mode}"
                 os.makedirs(os.path.dirname(file_name), exist_ok=True)
                 try:
-                    os.link(os.path.join(cas_path, file_hash), file_name)
+                    os.link(os.path.join(cas_path, cas_name), file_name)
                 except OSError as ose:
                     if ose.errno != errno.EEXIST:
                         raise
@@ -91,7 +92,6 @@ class CodeBase:
             return False
 
     def _stage_input_files(self, input_files_dir: str) -> None:
-
         input_file_names = [input_file["name"] for input_file in self.metadata.get("input_files", [])]
         if input_file_names:
             logging.debug("Staging input files...")
@@ -150,6 +150,7 @@ class CodeBase:
         self._populate_cas()
 
     def _record_build(self) -> None:
+        # TODO: Manage soft links
         with open(self.artifacts_json_file_name, 'w') as artifacts_json:
             json.dump({
                 "code_base": self.code_base_name,
@@ -163,11 +164,12 @@ class CodeBase:
         os.makedirs(cas_path, exist_ok=True)
         existing_blobs = set(os.listdir(cas_path))
         for file_name, hash_and_mode in self.output_hashes_and_modes.items():
-            file_hash = hash_and_mode[0]
-            if file_hash in existing_blobs:
+            file_hash, file_mode = hash_and_mode
+            cas_name = f"{file_hash}-{file_mode}"
+            if cas_name in existing_blobs:
                 continue
-            os.link(file_name, os.path.join(cas_path, file_hash))
-            existing_blobs.add(file_hash)
+            os.link(file_name, os.path.join(cas_path, cas_name))
+            existing_blobs.add(cas_name)
         logging.debug("Populated content-addresable storage.")
 
 
