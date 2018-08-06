@@ -114,6 +114,8 @@ class CodeBase:
         stdout_log = open(stdout_log_name, 'w')
         stderr_log = open(stderr_log_name, 'w')
 
+        os.chdir(self.code_base_root)
+
         # In order to avoid modifying the source (which would in turn modify the hash),
         # we build in a temp dir, which is a clone of the source.
         with tempfile.TemporaryDirectory() as temp_dir_parent:
@@ -180,8 +182,6 @@ def build(prefix: str = None, metadata_prefix: str = None, debug: bool = False) 
 
     logging.debug(f"Mono-repository root is {MONOREPOSITORY_ROOT}.")
     logging.debug(f"Current code base name is {CURRENT_CODE_BASE_NAME}.")
-    code_base_root = os.path.join(MONOREPOSITORY_ROOT, CURRENT_CODE_BASE_NAME)
-    os.chdir(code_base_root)
 
     if prefix is None:
         BUILD_INFORMATION.prefix = os.path.join(MONOREPOSITORY_ROOT, "prefix")
