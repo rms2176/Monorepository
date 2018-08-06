@@ -56,6 +56,7 @@ class CodeBase:
 
     def _compute_hash(self) -> None:
         self.hash = hashlib.sha1()
+        self.hash.update(BUILD_INFORMATION.prefix.encode("utf-8"))
         for dependency in self.metadata.get("dependencies", []):
             depedency_code_base = get_codebase(dependency)
             self.hash.update(depedency_code_base.hash.digest())
@@ -74,6 +75,7 @@ class CodeBase:
                 artifacts = json.load(artifacts_json)
 
             self.output_hashes_and_modes = artifacts["files"]
+            self.output_symbolic_links = artifacts["symbolic_links"]
             cas_path = os.path.join(BUILD_INFORMATION.metadata_prefix, "cas")
             for file_name, hash_and_mode in self.output_hashes_and_modes.items():
                 file_hash, file_mode = hash_and_mode
@@ -85,6 +87,11 @@ class CodeBase:
                     if ose.errno != errno.EEXIST:
                         raise
                 os.chmod(file_name, file_mode)
+
+            for symbolic_link_name, symbolic_link_target in self.output_symbolic_links.items():
+                os.makedirs(os.path.dirname(file_name), exist_ok=True)
+                os.symlink(symbolic_link_target, symbolic_link_name)
+
             logging.debug(f"Restored {self.code_base_name} from previous build.")
             return True
         else:
@@ -144,18 +151,19 @@ class CodeBase:
 
         helpers.make_files_non_writeable(BUILD_INFORMATION.prefix)
         logging.debug(f"Built {self.code_base_name}.")
-        self.output_hashes_and_modes = helpers.get_output_hashes_and_modes(BUILD_INFORMATION.prefix)
+        self.output_hashes_and_modes, self.output_symbolic_links = helpers.get_output_hashes_and_modes(BUILD_INFORMATION.prefix)
         logging.debug("Finished calculating hashes.")
         self._record_build()
         self._populate_cas()
 
     def _record_build(self) -> None:
-        # TODO: Manage soft links
         with open(self.artifacts_json_file_name, 'w') as artifacts_json:
             json.dump({
                 "code_base": self.code_base_name,
+                "prefix": BUILD_INFORMATION.prefix,
                 "hash": self.hash.hexdigest(),
                 "files": self.output_hashes_and_modes,
+                "symbolic_links": self.output_symbolic_links,
             }, artifacts_json)
 
     def _populate_cas(self) -> None:
@@ -187,6 +195,10 @@ def build(prefix: str = None, metadata_prefix: str = None, debug: bool = False) 
 
     if prefix is None:
         BUILD_INFORMATION.prefix = os.path.join(MONOREPOSITORY_ROOT, "prefix")
+        logging.debug(f"Cleaning up prefix directory {BUILD_INFORMATION.prefix}...")
+        if os.path.isdir(BUILD_INFORMATION.prefix):
+            shutil.rmtree(BUILD_INFORMATION.prefix)
+        logging.debug(f"Finished cleaning up prefix directory.")
     else:
         BUILD_INFORMATION.prefix = prefix
 

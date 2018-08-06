@@ -40,13 +40,16 @@ def get_file_hash(file_name: str) -> str:
 
 
 def get_output_hashes_and_modes(directory) -> Dict[str, Tuple[str, int]]:
-    # TODO: This doesn't handle soft links
     output_hashes_and_modes = {}
+    output_symbolic_links = {}
     for subdir, _dirs, files in os.walk(directory):
         for file in files:
             file_name = os.path.join(subdir, file)
-            output_hashes_and_modes[file_name] = [get_file_hash(file_name), os.stat(file_name).st_mode]
-    return output_hashes_and_modes
+            if os.path.islink(file_name):
+                output_symbolic_links[file_name] = os.readlink(file_name)
+            else:
+                output_hashes_and_modes[file_name] = [get_file_hash(file_name), os.stat(file_name).st_mode]
+    return output_hashes_and_modes, output_symbolic_links
 
 
 def get_builder_env(prefix: str):
