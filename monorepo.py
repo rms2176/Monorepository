@@ -109,8 +109,10 @@ class CodeBase:
             depedency_code_base = get_codebase(dependency)
             depedency_code_base.build()
 
-        stdout_log = open(os.path.join(BUILD_INFORMATION.metadata_prefix, f"{self.code_base_name}.out"), 'w')
-        stderr_log = open(os.path.join(BUILD_INFORMATION.metadata_prefix, f"{self.code_base_name}.err"), 'w')
+        stdout_log_name = os.path.join(BUILD_INFORMATION.metadata_prefix, f"{self.code_base_name}.out")
+        stderr_log_name = os.path.join(BUILD_INFORMATION.metadata_prefix, f"{self.code_base_name}.err")
+        stdout_log = open(stdout_log_name, 'w')
+        stderr_log = open(stderr_log_name, 'w')
 
         # In order to avoid modifying the source (which would in turn modify the hash),
         # we build in a temp dir, which is a clone of the source.
@@ -128,6 +130,8 @@ class CodeBase:
 
             os.chdir(temp_dir)
             logging.debug(f"Building {self.code_base_name}...")
+            logging.debug(f"Standard out log is: {stdout_log_name}")
+            logging.debug(f"Standard error log is: {stderr_log_name}")
             try:
                 subprocess.run(command, check=True,
                                env=helpers.get_builder_env(BUILD_INFORMATION.prefix),
