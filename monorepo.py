@@ -95,7 +95,11 @@ class CodeBase:
 
             for symbolic_link_name, symbolic_link_target in self.output_symbolic_links.items():
                 os.makedirs(os.path.dirname(symbolic_link_name), exist_ok=True)
-                os.symlink(symbolic_link_target, symbolic_link_name)
+                try:
+                    os.symlink(symbolic_link_target, symbolic_link_name)
+                except OSError as ose:
+                    if ose.errno != errno.EEXIST:
+                        raise
 
             logging.debug(f"Restored {self.code_base_name} from previous build.")
             return True
@@ -113,7 +117,7 @@ class CodeBase:
             # TODO: Validate hashes here.
             logging.debug("Staged input files.")
 
-    def build(self) -> None:
+    def build(self, skip_postbuild=False) -> None:
         if self.attempt_restore_previous_build():
             return
 
@@ -156,10 +160,11 @@ class CodeBase:
 
         helpers.make_files_non_writeable(BUILD_INFORMATION.prefix)
         logging.debug(f"Built {self.code_base_name}.")
-        self.output_hashes_and_modes, self.output_symbolic_links = helpers.get_output_hashes_and_modes(BUILD_INFORMATION.prefix)
-        logging.debug("Finished calculating hashes.")
-        self._record_build()
-        self._populate_cas()
+        if not skip_postbuild:
+            self.output_hashes_and_modes, self.output_symbolic_links = helpers.get_output_hashes_and_modes(BUILD_INFORMATION.prefix)
+            logging.debug("Finished calculating hashes.")
+            self._record_build()
+            self._populate_cas()
 
     def _record_build(self) -> None:
         with open(self.artifacts_json_file_name, 'w') as artifacts_json:
@@ -217,6 +222,11 @@ def build(prefix: str = None, metadata_prefix: str = None, debug: bool = False) 
 
     code_base = get_codebase(CURRENT_CODE_BASE_NAME)
     code_base.build()
+
+    # "postbuild" is a special codebase that gets built after all others
+    if os.path.isdir(os.path.join(MONOREPOSITORY_ROOT, "postbuild")):
+        code_base = get_codebase("postbuild")
+        code_base.build(skip_postbuild=True)
 
 
 if __name__ == "__main__":
