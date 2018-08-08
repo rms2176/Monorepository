@@ -5,6 +5,7 @@
 # and we don't care about the performance penalty.
 # pylint: disable=logging-fstring-interpolation
 
+import datetime
 import errno
 import hashlib
 import json
@@ -13,11 +14,12 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import List
+from typing import List, Optional
 
 import argh
 import yaml
 
+import artifact_uploader
 import helpers
 import http_file_stager
 
@@ -25,6 +27,7 @@ import http_file_stager
 MONOREPOSITORY_ROOT, CURRENT_CODE_BASE_NAME = helpers.find_code_base_root()
 CODEBASES = {}
 BUILD_INFORMATION = helpers.BuildInformation()
+ORIGINAL_DIRECTORY = os.getcwd()
 
 
 def get_codebase(code_base_name):
@@ -229,5 +232,35 @@ def build(prefix: str = None, metadata_prefix: str = None, debug: bool = False) 
         code_base.build(skip_postbuild=True)
 
 
+@argh.arg("--prefix", help="Prefix to output build artifacts to")
+@argh.arg("--metadata-prefix", help="Prefix to output build metadata to; the metadata should be on the same file system as the prefix")
+@argh.arg("--debug", action="store_true", help="Enable debug logging")
+@argh.arg("--archive-name", help="The name of the pack (defaults to <codebase>-<date>-<codebase-hash>)")
+def upload(prefix: str = None, metadata_prefix: str = None, debug: bool = False, archive_name: Optional[str] = None):
+    build(prefix, metadata_prefix, debug)
+
+    # Jump back to original directory
+    os.chdir(ORIGINAL_DIRECTORY)
+
+    # The build process filled in the prefix to which it actually built
+    prefix = BUILD_INFORMATION.prefix
+
+    if archive_name is None:
+        printable_date = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+        codebase_hash = get_codebase(CURRENT_CODE_BASE_NAME).hash.hexdigest()
+        archive_name = f"{CURRENT_CODE_BASE_NAME}-{printable_date}-{codebase_hash}"
+
+    with tempfile.TemporaryDirectory() as temp_dir_parent:
+        archive_path = os.path.join(temp_dir_parent, f"{archive_name}.tar.xz")
+        logging.debug(f"Archiving {prefix} to {archive_path}...")
+        # We shell out to tar because I assume the Python version doesn't support multithreading.
+        # I didn't actually check though.
+        subprocess.run(["tar", "--create", "--xz", "--file", archive_path, prefix],
+                       check=True, env={"XZ_OPT": "--threads=0 -0", **os.environ})
+        logging.debug(f"Done archiving. Uploading {archive_name}...")
+        artifact_uploader.upload_artifact(archive_path)
+        logging.debug(f"Done uploading.")
+
+
 if __name__ == "__main__":
-    argh.dispatch_commands([build])
+    argh.dispatch_commands([build, upload])

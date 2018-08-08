@@ -1,3 +1,5 @@
+"""You may replace this with your own version."""
+
 # pylint: disable=line-too-long
 
 import os
