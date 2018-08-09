@@ -115,8 +115,7 @@ class CodeBase:
         if input_file_names:
             logging.debug("Staging input files...")
             os.makedirs(input_files_dir, exist_ok=True)
-            my_http_file_stager = http_file_stager.HttpFileStager(input_files_dir, input_file_names)
-            my_http_file_stager.stage()
+            http_file_stager.stage(input_files_dir, input_file_names)
             # TODO: Validate hashes here.
             logging.debug("Staged input files.")
 
