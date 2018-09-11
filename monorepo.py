@@ -254,7 +254,7 @@ def upload(prefix: str = None, metadata_prefix: str = None, debug: bool = False,
         logging.debug(f"Archiving {prefix} to {archive_path}...")
         # We shell out to tar because I assume the Python version doesn't support multithreading.
         # I didn't actually check though.
-        subprocess.run(["tar", "--create", "--xz", "--file", archive_path, prefix],
+        subprocess.run(["tar", "--create", "--xz", "--absolute-names", "--file", archive_path, prefix],
                        check=True, env={"XZ_OPT": "--threads=0 -0", **os.environ})
         logging.debug(f"Done archiving. Uploading {archive_name}...")
         artifact_uploader.upload_artifact(archive_path)
