@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+set -u
+
+cd input_files
+tar --extract --file rabbitmq-server-generic-unix-3.7.7.tar.xz
+
+mkdir --parents "${PREFIX}/opt"
+mv rabbitmq_server-3.7.7 "${PREFIX}"/opt

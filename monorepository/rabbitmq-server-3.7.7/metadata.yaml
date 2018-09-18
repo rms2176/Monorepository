@@ -1,0 +1,6 @@
+---
+dependencies:
+  - elixir-1.6.0
+
+input_files:
+  - name: rabbitmq-server-generic-unix-3.7.7.tar.xz
