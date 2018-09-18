@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+set -u
+
+cd input_files
+tar --extract --file elixir-1.6.0.tar.gz
+cd elixir-1.6.0
+
+make --jobs 6 install
