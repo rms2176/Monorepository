@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+set -u
+
+cd input_files
+tar --extract --file openssl-1.1.1.tar.gz
+cd openssl-1.1.1
+
+./Configure --prefix="${PREFIX}" linux-x86_64
+make --jobs 3
+make --jobs 3 install

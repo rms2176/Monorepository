@@ -1,6 +1,7 @@
 ---
 dependencies:
   - ncurses-6.1
+  - openssl-1.1.1
 
 input_files:
   - name: otp_src_21.0.tar.gz

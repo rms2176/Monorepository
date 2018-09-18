@@ -7,5 +7,5 @@ cd input_files
 tar --extract --file otp_src_21.0.tar.gz
 cd otp_src_21.0
 
-./configure --prefix "${PREFIX}" CPPFLAGS="-I${PREFIX}/include" LDFLAGS="-L${PREFIX}/lib"
+./configure --prefix "${PREFIX}" CPPFLAGS="-I${PREFIX}/include" LDFLAGS="-L${PREFIX}/lib" --with-ssl="${PREFIX}"
 make --jobs 6 install
