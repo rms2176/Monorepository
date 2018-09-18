@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+set -u
+
+codebase_name=kafka_2.11-1.0.1
+
+cd input_files
+tar --extract --file "${codebase_name}".tgz
+
+mkdir --parents "${PREFIX}"/{bin,opt}
+mv "${codebase_name}" "${PREFIX}"/opt
+
+# TODO: Build wrappers for the executables
+
+for executable in "${executables[@]}"
+do
+    ln --symbolic ../opt/"${codebase_name}"/bin/"${executable}" "${PREFIX}"/bin/
+done
+
+(
+    pushd "${PREFIX}"/opt/"${codebase_name}"
+
+    # Remove Windows-specific files
+    rm -rf bin/windows
+
+    # Remove things we don't need to ship
+    rm -rf LICENSE  NOTICE
+    rm -rf site-docs
+    rm -rf libs/*.asc
+)

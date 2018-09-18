@@ -1,0 +1,6 @@
+---
+dependencies:
+  - server-jre-8u181
+
+input_files:
+  - name: kafka_2.11-1.0.1.tgz

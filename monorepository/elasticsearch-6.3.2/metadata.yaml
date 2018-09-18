@@ -1,0 +1,9 @@
+---
+dependencies:
+  - serverjre-10.0.2
+
+input_files:
+  - name: elasticsearch-6.3.2.tar.gz
+  - name: ingest-attachment-6.3.2.zip
+  - name: ingest-geoip-6.3.2.zip
+  - name: ingest-user-agent-6.3.2.zip

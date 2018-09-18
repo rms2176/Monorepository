@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import sys
 from typing import List, Optional
 
 import argh
@@ -153,9 +154,15 @@ class CodeBase:
             logging.debug(f"Standard out log is: {stdout_log_name}")
             logging.debug(f"Standard error log is: {stderr_log_name}")
             try:
+                # os.execlpe("bash", "bash", helpers.get_builder_env(BUILD_INFORMATION.prefix))
                 subprocess.run(command, check=True,
                                env=helpers.get_builder_env(BUILD_INFORMATION.prefix),
                                stdout=stdout_log, stderr=stderr_log)
+            except subprocess.CalledProcessError as cpe:
+                stdout_log.close()
+                stderr_log.close()
+                logging.debug(f"Build failed: {cpe}")
+                sys.exit(1)
             finally:
                 stdout_log.close()
                 stderr_log.close()

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+set -u
+
+cd input_files
+tar --extract --file otp_src_21.0.tar.gz
+cd otp_src_21.0
+
+./configure --prefix "${PREFIX}" CPPFLAGS="-I${PREFIX}/include" LDFLAGS="-L${PREFIX}/lib"
+make --jobs 6 install

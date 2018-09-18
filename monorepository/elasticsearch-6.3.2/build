@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -e
+set -u
+
+codebase_name=elasticsearch-6.3.2
+
+cd input_files
+tar --extract --file "${codebase_name}".tar.gz
+
+mkdir --parents "${PREFIX}"/{bin,opt}
+mv "${codebase_name}" "${PREFIX}"/opt
+
+executables=(
+    elasticsearch
+    elasticsearch-env
+    elasticsearch-sql-cli
+)
+
+for executable in "${executables[@]}"
+do
+    # TODO: These don't work; we should instead make wrapper scripts that exec the real script.
+    ln --symbolic ../opt/"${codebase_name}"/bin/"${executable}" "${PREFIX}"/bin/
+done
+
+# Plugin installation
+
+input_files_dir=$(readlink --canonicalize .)
+plugins=(
+    ingest-attachment-6.3.2.zip
+    ingest-geoip-6.3.2.zip
+    ingest-user-agent-6.3.2.zip
+)
+for plugin in "${plugins[@]}"
+do
+    "${PREFIX}"/opt/"${codebase_name}"/bin/elasticsearch-plugin install --batch "file://${input_files_dir}/${plugin}"
+done
+
+(
+    pushd "${PREFIX}"/opt/"${codebase_name}"
+
+    # Remove Windows-specific files
+    rm bin/*.bat
+    rm bin/*.exe
+
+    # Remove things we don't need to ship
+    rmdir logs
+    rm *.txt
+    rm README.textile
+
+    find -name NOTICE.txt -delete
+    find -name LICENSE.txt -delete
+)

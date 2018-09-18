@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -e
+set -u
+
+cd input_files
+tar --extract --file serverjre-10.0.2_linux-x64_bin.tar.gz
+
+mkdir --parents "${PREFIX}"/{bin,opt}
+mv jdk-10.0.2 "${PREFIX}"/opt
+
+executables=(
+    jar
+    java
+    javac
+    jcmd
+    jdb
+    jinfo
+    jmap
+    jps
+    jrunscript
+    jstack
+    jstat
+    jstatd
+    keytool
+)
+
+for executable in "${executables[@]}"
+do
+    ln --symbolic ../opt/jdk-10.0.2/bin/"${executable}" "${PREFIX}"/bin/
+done
+
+# Remove things that we don't need
+(
+    pushd "${PREFIX}"/opt/jdk-10.0.2
+    rm -rf legal  # No idea if I'm allowed to remove this...
+    rm release
+)

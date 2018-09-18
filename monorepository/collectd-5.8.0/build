@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+set -u
+
+cd input_files
+tar --extract --file collectd-5.8.0.tar.bz2
+cd collectd-5.8.0
+
+./configure --prefix "${PREFIX}"
+make --jobs 6 install

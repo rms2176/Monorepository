@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+set -u
+
+cd input_files
+tar --extract --file server-jre-8u181-linux-x64.tar.gz
+
+mkdir --parents "${PREFIX}"/{bin,opt}
+mv jdk1.8.0_181 "${PREFIX}"/opt
+
+executables=(
+    jar
+    java
+    javac
+    jcmd
+    jps
+    jrunscript
+    keytool
+)
+
+for executable in "${executables[@]}"
+do
+    ln --symbolic ../opt/jdk1.8.0_181/bin/"${executable}" "${PREFIX}"/bin/
+done
+
+# Remove things that we don't need
+(
+    pushd "${PREFIX}"/opt/jdk1.8.0_181
+    rm -rf legal  # No idea if I'm allowed to remove this...
+    rm release
+)

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+set -u
+
+codebase_name=filebeat-6.3.2
+
+cd input_files
+tar --extract --file "${codebase_name}"-linux-x86_64.tar.gz
+mv "${codebase_name}"-linux-x86_64 "${codebase_name}"
+mkdir --parents "${PREFIX}"/opt
+mv "${codebase_name}" "${PREFIX}"/opt
